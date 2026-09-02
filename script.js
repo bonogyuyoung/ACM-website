@@ -169,6 +169,38 @@ function renderSiteInfo() {
   if (stageEl) stageEl.textContent = siteInfo.currentStage;
 }
 
+// Render a live content summary on the home page ("N Seasons · N Episodes
+// (N Published)"), computed entirely from `collections`/`config` — no counts
+// are ever hardcoded. When there's no content yet, this shows the same
+// empty-state block as every list page instead of a "0 of 0" line.
+function renderSiteStatus() {
+  const container = document.getElementById("site-status");
+  if (!container) return;
+
+  if (!collections.length || !allItems.length) {
+    renderEmptyState(
+      container,
+      `Content is still being planned — no ${config.labels.collectionPlural.toLowerCase()} or ${config.labels.itemPlural.toLowerCase()} published yet.`
+    );
+    return;
+  }
+
+  const stages = config.statusStages || [];
+  const finalStage = stages.length ? stages[stages.length - 1] : null;
+  const finalStageNormalized = finalStage ? finalStage.toLowerCase() : null;
+  const publishedCount = finalStageNormalized
+    ? allItems.filter(item => (item.status || '').toLowerCase() === finalStageNormalized).length
+    : 0;
+  const publishedText = finalStage ? ` (${publishedCount} ${escapeHTML(finalStage)})` : '';
+
+  container.innerHTML = `
+    <p class="card-meta">
+      <strong>${collections.length}</strong> ${escapeHTML(config.labels.collectionPlural)} ·
+      <strong>${allItems.length}</strong> ${escapeHTML(config.labels.itemPlural)}${publishedText}
+    </p>
+  `;
+}
+
 // Helper function to generate status badge class.
 // Falls back to "badge default" for any status not listed in config.statusStages,
 // since the CSS has no color defined for unrecognized status strings.
@@ -622,6 +654,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderHeader();
   renderFooter();
   renderSiteInfo();
+  renderSiteStatus();
   renderFeaturedVideo();
   renderCollections();
   renderEpisode();

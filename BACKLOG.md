@@ -72,7 +72,7 @@
 선행: A7 · 파일: `script.js`, `styles.css`
 완료: `youtubeId` + 16:9 반응형 임베드. 없으면 Coming Soon. `featuredVideo` 하드코딩 제거하고 "가장 최근 published" 자동 선택 — 없으면 섹션 자체를 숨김.
 
-### [ ] A10 — 홈 재구성
+### [x] A10 — 홈 재구성
 선행: A9 · 파일: `index.html`, `script.js`
 완료: 프로젝트명·미션·짧은 설명·현황을 전부 `config`와 `collections`에서 계산. 하드코딩된 숫자 0개. 콘텐츠가 없으면 "준비 중" 상태로 자연스럽게 보임.
 
