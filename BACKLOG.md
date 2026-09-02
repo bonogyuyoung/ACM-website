@@ -44,7 +44,7 @@
 **금지: 시즌·에피소드를 하나라도 시딩하지 말 것.** 기존 Antibiotic Resistance / Vaccines / CRISPR 3건도 제거.
 완료: `topics`/`articles`/`videos`를 `collections`에서 파생시켜 `script.js` 무수정으로 기존 페이지 동작.
 
-### [ ] A3 — 상태 파이프라인
+### [x] A3 — 상태 파이프라인
 선행: A2 · 파일: `styles.css`, `script.js`
 완료: 상태 단계를 `config`에서 읽어 배지를 생성(단계 목록 자체가 설정값). 기본값 `planned → researching → drafting → review → published`. `getBadgeClass()`가 모르는 상태를 받으면 `.badge.default`로 떨어지도록 수정 — 현재는 배경색 없는 배지가 나오는 버그.
 

@@ -15,10 +15,13 @@
   --text-light: #666666;
   --border-color: #e0e0e0;
   
-  /* Status Badge Colors */
-  --badge-drafting: #f39c12;
-  --badge-researching: #9b59b6;
+  /* Status Badge Colors — one per config.statusStages entry, plus a default
+     fallback for any status not in that list. */
   --badge-planned: #95a5a6;
+  --badge-researching: #9b59b6;
+  --badge-drafting: #f39c12;
+  --badge-review: #e67e22;
+  --badge-published: #27ae60;
   
   /* Fonts */
   --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -291,10 +294,11 @@ main {
   margin-bottom: 0.5rem;
 }
 
-.badge.drafting { background-color: var(--badge-drafting); }
-.badge.researching { background-color: var(--badge-researching); }
 .badge.planned { background-color: var(--badge-planned); }
-.badge.script-writing { background-color: var(--badge-researching); }
+.badge.researching { background-color: var(--badge-researching); }
+.badge.drafting { background-color: var(--badge-drafting); }
+.badge.review { background-color: var(--badge-review); }
+.badge.published { background-color: var(--badge-published); }
 .badge.default { background-color: var(--accent-color); }
 
 /* Buttons */

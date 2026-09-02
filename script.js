@@ -168,10 +168,17 @@ function renderSiteInfo() {
   if (stageEl) stageEl.textContent = siteInfo.currentStage;
 }
 
-// Helper function to generate status badge class
+// Helper function to generate status badge class.
+// Falls back to "badge default" for any status not listed in config.statusStages,
+// since the CSS has no color defined for unrecognized status strings.
 function getBadgeClass(status) {
-  const normalized = status.toLowerCase().replace(/\s+/g, '-');
-  return `badge ${normalized}`;
+  const normalize = (str) => (str || '').toLowerCase().replace(/\s+/g, '-');
+  const normalized = normalize(status);
+  const knownStages = (typeof config !== 'undefined' && Array.isArray(config.statusStages))
+    ? config.statusStages
+    : [];
+  const isKnown = knownStages.some(stage => normalize(stage) === normalized);
+  return isKnown ? `badge ${normalized}` : 'badge default';
 }
 
 // Render topic cards
