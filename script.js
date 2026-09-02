@@ -331,6 +331,94 @@ function renderEpisode() {
   `;
 }
 
+// Render an item's article slot as the full 7-section article (article.html?id=...).
+// Any missing section shows a "Coming soon." placeholder so the layout never breaks,
+// since article bodies are written by staff later, not by automation.
+function renderArticleDetail() {
+  const container = document.getElementById("article-container");
+  if (!container) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+  const match = id ? findItemById(id) : null;
+  const item = match && match.item;
+  const article = item && item.article;
+
+  if (!article) {
+    document.title = `Article Not Found | ${siteInfo.projectName}`;
+    container.innerHTML = `
+      <div class="empty-state">
+        <p>We couldn't find that article.</p>
+        <a href="articles.html" class="btn btn-active">Back to Articles</a>
+      </div>
+    `;
+    return;
+  }
+
+  const placeholder = "Coming soon.";
+  const textOr = (value) => value ? escapeHTML(value) : placeholder;
+
+  document.title = `${article.title || item.title} | ${siteInfo.projectName}`;
+
+  const keyTermsHtml = article.keyTerms && article.keyTerms.length
+    ? `<ul>${article.keyTerms.map(t => `<li><strong>${escapeHTML(t.term)}:</strong> ${escapeHTML(t.definition)}</li>`).join('')}</ul>`
+    : `<p>${placeholder}</p>`;
+
+  const stepByStepHtml = article.stepByStep && article.stepByStep.length
+    ? `<ol>${article.stepByStep.map(step => `<li>${escapeHTML(step)}</li>`).join('')}</ol>`
+    : `<p>${placeholder}</p>`;
+
+  const sourcesHtml = article.sources && article.sources.length
+    ? `<ul>${article.sources.map(source => `<li>${escapeHTML(source)}</li>`).join('')}</ul>`
+    : `<p>${placeholder}</p>`;
+
+  container.innerHTML = `
+    <article class="card">
+      <div class="article-header">
+        <h2>${escapeHTML(article.title || item.title)}</h2>
+        <div class="card-meta">
+          <strong>Last Updated:</strong> ${textOr(article.lastUpdated)}
+        </div>
+      </div>
+
+      <section>
+        <h3>Student-Friendly Summary</h3>
+        <p>${textOr(article.summary)}</p>
+      </section>
+
+      <section>
+        <h3>Why This Topic Matters</h3>
+        <p>${textOr(article.whyItMatters)}</p>
+      </section>
+
+      <section>
+        <h3>Key Terms</h3>
+        ${keyTermsHtml}
+      </section>
+
+      <section>
+        <h3>Core Explanation</h3>
+        <p>${textOr(article.body)}</p>
+      </section>
+
+      <section>
+        <h3>Step-by-Step Explanation</h3>
+        ${stepByStepHtml}
+      </section>
+
+      <div class="disclaimer-box">
+        <h4>Educational Disclaimer</h4>
+        <p>This article is created by students for educational purposes only. It does not provide medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider with any medical questions.</p>
+      </div>
+
+      <section>
+        <h3>Sources</h3>
+        ${sourcesHtml}
+      </section>
+    </article>
+  `;
+}
+
 // Render topic cards
 // The cards are rendered from the topics array in data.js
 function renderTopics() {
@@ -522,6 +610,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderFeaturedVideo();
   renderCollections();
   renderEpisode();
+  renderArticleDetail();
   renderTopics();
   renderArticles();
   renderVideos();
