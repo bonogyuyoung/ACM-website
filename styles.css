@@ -301,6 +301,25 @@ main {
 .badge.published { background-color: var(--badge-published); }
 .badge.default { background-color: var(--accent-color); }
 
+/* Empty State — shown by renderEmptyState() whenever a list has 0 items */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+  background-color: var(--card-bg);
+  color: var(--text-light);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.grid-container .empty-state {
+  grid-column: 1 / -1;
+}
+
 /* Buttons */
 .btn {
   display: inline-block;

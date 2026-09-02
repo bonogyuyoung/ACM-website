@@ -2,6 +2,7 @@
 
 자동 실행이 매회 기록한다. 형식: `날짜 · 작업ID · 요약 · 변경 파일`
 
+- 2026-09-02 · A4 · 빈 상태 시스템. `renderEmptyState()` 공통 함수를 추가하고 topics/articles/videos/team-roles/roadmap/home-buttons 렌더 함수 전부가 0개일 때 이걸 쓰도록 통일. `styles.css`에 `.empty-state` 스타일 추가(grid 안에서는 전체 폭 차지). 콘텐츠 0개인 topics/articles/videos 페이지가 깨진 화면이 아니라 안내 문구가 있는 완성된 화면으로 보이는 것을 시뮬레이션으로 확인 · script.js, styles.css
 - 2026-09-02 · A3 · 상태 파이프라인. `getBadgeClass()`가 `config.statusStages`에 없는 상태를 받으면 `badge default`로 떨어지도록 수정(기존엔 배경색 없는 배지가 나오는 버그였음). `styles.css`에 5단계(planned/researching/drafting/review/published) 배지 색을 전부 정의하고, 더 이상 쓰이지 않는 `script-writing` 배지 제거 · script.js, styles.css
 - 2026-09-02 · A2 · 빈 계층 스키마 + 설정 분리. `data.js`를 `config`(사이트명·표시 명칭·상태 단계 목록·과목 분류·발행 주기)와 `collections`(묶음→항목 2계층, 빈 배열)로 재구성. 기존 Antibiotic Resistance/Vaccines/CRISPR 3건과 `featuredVideo`의 하드코딩된 콘텐츠 제거. `topics`/`articles`/`videos`는 `collections`에서 map/filter로 파생시켜 `script.js` 무수정으로 7개 페이지 정상 동작 확인(0개·N개 양쪽 케이스 검증) · data.js
 - 2026-09-02 · A1 · 저장소 구조 정리 + 배포 확인. `.nojekyll` 추가로 Pages가 파일을 그대로 서빙하도록 지정, README에 폴더 구조와 편집 안내 작성. Pages API로 7개 페이지 전부 200 응답 확인, 상대경로 링크(styles.css/data.js/script.js) 정상. X1(저장소+토큰)이 이미 풀려 있음을 확인해 BLOCKERS.md 해결됨으로 이동 · README.md, .nojekyll, BLOCKERS.md

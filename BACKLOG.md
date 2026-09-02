@@ -48,7 +48,7 @@
 선행: A2 · 파일: `styles.css`, `script.js`
 완료: 상태 단계를 `config`에서 읽어 배지를 생성(단계 목록 자체가 설정값). 기본값 `planned → researching → drafting → review → published`. `getBadgeClass()`가 모르는 상태를 받으면 `.badge.default`로 떨어지도록 수정 — 현재는 배경색 없는 배지가 나오는 버그.
 
-### [ ] A4 — 빈 상태 시스템
+### [x] A4 — 빈 상태 시스템
 선행: A3 · 파일: `styles.css`, `script.js`
 완료: 목록이 0개일 때의 안내 블록을 공통 컴포넌트로. **깨진 화면이 아니라 의도된 화면으로 보여야 한다.** 모든 목록 렌더 함수가 이걸 쓴다. 이 작업 이후 사이트는 콘텐츠 없이도 완성된 인상을 준다.
 

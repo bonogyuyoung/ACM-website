@@ -181,11 +181,26 @@ function getBadgeClass(status) {
   return isKnown ? `badge ${normalized}` : 'badge default';
 }
 
+// Render an empty-state block into a container. Used by every list render
+// function so an empty list is a designed screen, not a blank/broken one.
+function renderEmptyState(container, message) {
+  container.innerHTML = `
+    <div class="empty-state">
+      <p>${escapeHTML(message)}</p>
+    </div>
+  `;
+}
+
 // Render topic cards
 // The cards are rendered from the topics array in data.js
 function renderTopics() {
   const container = document.getElementById("topics-grid");
   if (!container) return;
+
+  if (!topics || topics.length === 0) {
+    renderEmptyState(container, "No topics have been published yet. Check back soon.");
+    return;
+  }
 
   container.innerHTML = topics.map(topic => `
     <div class="card">
@@ -204,6 +219,11 @@ function renderTopics() {
 function renderArticles() {
   const container = document.getElementById("articles-grid");
   if (!container) return;
+
+  if (!articles || articles.length === 0) {
+    renderEmptyState(container, "No articles have been published yet. Check back soon.");
+    return;
+  }
 
   // Render articles and determine button state based on link
   // If link is "#", show a disabled "Coming Soon" button.
@@ -233,6 +253,11 @@ function renderVideos() {
   const container = document.getElementById("videos-grid");
   if (!container) return;
 
+  if (!videos || videos.length === 0) {
+    renderEmptyState(container, "No videos have been published yet. Check back soon.");
+    return;
+  }
+
   // Render videos and determine button state based on link
   container.innerHTML = videos.map(video => {
     const isReady = video.link && video.link !== "#";
@@ -260,6 +285,11 @@ function renderTeamRoles() {
   const container = document.getElementById("team-roles-grid");
   if (!container) return;
 
+  if (!teamRoles || teamRoles.length === 0) {
+    renderEmptyState(container, "Team roles haven't been added yet.");
+    return;
+  }
+
   container.innerHTML = teamRoles.map(role => `
     <div class="card">
       <h3>${role.role}</h3>
@@ -272,6 +302,11 @@ function renderTeamRoles() {
 function renderRoadmap() {
   const container = document.getElementById("roadmap-list");
   if (!container) return;
+
+  if (!roadmap || roadmap.length === 0) {
+    renderEmptyState(container, "Roadmap hasn't been added yet.");
+    return;
+  }
 
   container.innerHTML = roadmap.map(phase => `
     <div class="card">
@@ -294,7 +329,7 @@ function renderHomeButtons() {
   if (!container) return;
 
   if (typeof homeButtons === 'undefined' || !homeButtons || homeButtons.length === 0) {
-    container.innerHTML = '<p>No buttons configured.</p>';
+    renderEmptyState(container, "No navigation links configured yet.");
     return;
   }
 
