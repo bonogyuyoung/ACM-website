@@ -39,6 +39,7 @@ function renderHeader() {
           <button class="explore-button" id="explore-btn" aria-expanded="false" aria-controls="explore-menu">Explore ▾</button>
           <nav class="explore-menu" id="explore-menu">
             <a href="index.html" class="${isActive('index.html')}">Home</a>
+            <a href="seasons.html" class="${isActive('seasons.html')}">${escapeHTML(config.labels.collectionPlural)}</a>
             <a href="topics.html" class="${isActive('topics.html')}">Topics</a>
             <a href="articles.html" class="${isActive('articles.html')}">Articles</a>
             <a href="videos.html" class="${isActive('videos.html')}">Videos</a>
@@ -189,6 +190,57 @@ function renderEmptyState(container, message) {
       <p>${escapeHTML(message)}</p>
     </div>
   `;
+}
+
+// Render collection cards (default label: Season) on seasons.html.
+// Each collection card shows its title, optional subtitle, item count, and
+// progress toward the final status stage — all read from config/collections,
+// never assumed.
+function renderCollections() {
+  const container = document.getElementById("collections-grid");
+  if (!container) return;
+
+  const collectionLabel = config.labels.collection;
+  const collectionPlural = config.labels.collectionPlural;
+  const itemPlural = config.labels.itemPlural;
+
+  const headingEl = document.getElementById("collections-heading");
+  const subheadingEl = document.getElementById("collections-subheading");
+  if (headingEl) headingEl.textContent = collectionPlural;
+  if (subheadingEl) {
+    subheadingEl.textContent =
+      `Browse each ${collectionLabel.toLowerCase()} and how many ${itemPlural.toLowerCase()} it contains.`;
+  }
+  document.title = `${collectionPlural} | ${siteInfo.projectName}`;
+
+  if (!collections || collections.length === 0) {
+    renderEmptyState(container, `No ${collectionPlural.toLowerCase()} have been published yet. Check back soon.`);
+    return;
+  }
+
+  const stages = config.statusStages || [];
+  const finalStage = stages.length ? stages[stages.length - 1].toLowerCase() : null;
+
+  container.innerHTML = collections.map(collection => {
+    const items = collection.items || [];
+    const total = items.length;
+    const doneCount = finalStage
+      ? items.filter(item => (item.status || '').toLowerCase() === finalStage).length
+      : 0;
+    const progress = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+    const subtitleHtml = collection.subtitle ? `<p>${escapeHTML(collection.subtitle)}</p>` : '';
+
+    return `
+      <div class="card">
+        <h3>${escapeHTML(collection.title)}</h3>
+        ${subtitleHtml}
+        <div class="card-meta">
+          <strong>${escapeHTML(itemPlural)}:</strong> ${total}<br>
+          <strong>Progress:</strong> ${progress}%
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 // Render topic cards
@@ -380,6 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderFooter();
   renderSiteInfo();
   renderFeaturedVideo();
+  renderCollections();
   renderTopics();
   renderArticles();
   renderVideos();
