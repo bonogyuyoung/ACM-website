@@ -43,6 +43,7 @@ function renderHeader() {
             <a href="topics.html" class="${isActive('topics.html')}">Topics</a>
             <a href="articles.html" class="${isActive('articles.html')}">Articles</a>
             <a href="videos.html" class="${isActive('videos.html')}">Videos</a>
+            <a href="archive.html" class="${isActive('archive.html')}">Archive</a>
             <a href="future.html" class="${isActive('future.html')}">Future Platform</a>
             <a href="about.html" class="${isActive('about.html')}">Who We Are</a>
             <a href="contact.html" class="${isActive('contact.html')}">Contact</a>
@@ -270,6 +271,60 @@ function renderCollections() {
           <strong>${escapeHTML(itemPlural)}:</strong> ${total}<br>
           <strong>Progress:</strong> ${progress}%
         </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Render the publish archive (archive.html) — published items grouped by the
+// month they went live, newest first. Grouping key comes from item.publishedAt,
+// an optional per-item field (set once an item reaches the final status
+// stage), so items without it simply don't appear yet rather than breaking
+// the page. The per-month target line only appears when config.publishCadence
+// is a number — it's null until decided, so no fixed cadence is assumed.
+function renderArchive() {
+  const container = document.getElementById("archive-container");
+  if (!container) return;
+
+  document.title = `Archive | ${siteInfo.projectName}`;
+
+  const stages = config.statusStages || [];
+  const finalStage = stages.length ? stages[stages.length - 1].toLowerCase() : null;
+
+  const publishedItems = finalStage
+    ? allItems.filter(item => (item.status || '').toLowerCase() === finalStage && item.publishedAt)
+    : [];
+
+  if (!publishedItems.length) {
+    renderEmptyState(container, "No published content yet. Check back once the first items go live.");
+    return;
+  }
+
+  const groups = {};
+  publishedItems.forEach(item => {
+    const date = new Date(item.publishedAt);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    (groups[key] = groups[key] || []).push(item);
+  });
+
+  const cadence = typeof config.publishCadence === 'number' ? config.publishCadence : null;
+
+  container.innerHTML = Object.keys(groups).sort().reverse().map(key => {
+    const [year, month] = key.split('-');
+    const monthLabel = new Date(Number(year), Number(month) - 1, 1)
+      .toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    const items = groups[key];
+    const targetHtml = cadence !== null
+      ? `Target: ${cadence} · Actual: ${items.length}`
+      : `Published: ${items.length}`;
+
+    return `
+      <div class="card">
+        <h3>${escapeHTML(monthLabel)}</h3>
+        <div class="card-meta">${escapeHTML(targetHtml)}</div>
+        <ul>
+          ${items.map(item => `<li><a href="episode.html?id=${encodeURIComponent(item.id)}">${escapeHTML(item.title)}</a></li>`).join('')}
+        </ul>
       </div>
     `;
   }).join('');
@@ -657,6 +712,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderSiteStatus();
   renderFeaturedVideo();
   renderCollections();
+  renderArchive();
   renderEpisode();
   renderArticleDetail();
   renderTopics();
