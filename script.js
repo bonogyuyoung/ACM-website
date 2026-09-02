@@ -243,6 +243,94 @@ function renderCollections() {
   }).join('');
 }
 
+// Find an item (default label: Episode) by id across every collection.
+function findItemById(id) {
+  for (const collection of collections) {
+    const items = collection.items || [];
+    const item = items.find(candidate => String(candidate.id) === String(id));
+    if (item) return { item, collection };
+  }
+  return null;
+}
+
+// Render a single item's detail page (episode.html?id=...). One page handles
+// every item regardless of how many exist. An invalid/missing id shows a
+// guide back to the collection list instead of a broken page.
+function renderEpisode() {
+  const container = document.getElementById("episode-container");
+  if (!container) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+  const match = id ? findItemById(id) : null;
+
+  const itemLabel = config.labels.item;
+  const collectionPlural = config.labels.collectionPlural;
+
+  if (!match) {
+    document.title = `${itemLabel} Not Found | ${siteInfo.projectName}`;
+    container.innerHTML = `
+      <div class="empty-state">
+        <p>We couldn't find that ${escapeHTML(itemLabel.toLowerCase())}.</p>
+        <a href="seasons.html" class="btn btn-active">Back to ${escapeHTML(collectionPlural)}</a>
+      </div>
+    `;
+    return;
+  }
+
+  const { item, collection } = match;
+  document.title = `${item.title} | ${siteInfo.projectName}`;
+
+  const coreConceptsHtml = item.coreConcepts && item.coreConcepts.length
+    ? `<ul>${item.coreConcepts.map(concept => `<li>${escapeHTML(concept)}</li>`).join('')}</ul>`
+    : `<p>Coming soon.</p>`;
+
+  const bigQuestionHtml = item.bigQuestion
+    ? `<p>${escapeHTML(item.bigQuestion)}</p>`
+    : `<p>Coming soon.</p>`;
+
+  const renderSlot = (label, slot) => {
+    const isReady = slot && slot.link && slot.link !== "#";
+    const button = isReady
+      ? `<a href="${escapeHTML(slot.link)}" class="btn btn-active">View ${escapeHTML(label)}</a>`
+      : `<span class="btn btn-disabled">Coming Soon</span>`;
+    return `
+      <div class="card">
+        <h4>${escapeHTML(label)}</h4>
+        ${button}
+      </div>
+    `;
+  };
+
+  container.innerHTML = `
+    <div class="card">
+      <div class="article-header">
+        <span class="${getBadgeClass(item.status)}">${escapeHTML(item.status || '')}</span>
+        <h2>${escapeHTML(item.title)}</h2>
+        <div class="card-meta">
+          <strong>${escapeHTML(config.labels.collection)}:</strong> ${escapeHTML(collection.title)}
+        </div>
+      </div>
+
+      <section>
+        <h3>Core Concepts</h3>
+        ${coreConceptsHtml}
+      </section>
+
+      <section>
+        <h3>Big Question</h3>
+        ${bigQuestionHtml}
+      </section>
+
+      <section class="grid-container">
+        ${renderSlot("Article", item.article)}
+        ${renderSlot("Video", item.video)}
+        ${renderSlot("Paper", item.paper)}
+      </section>
+    </div>
+  `;
+}
+
 // Render topic cards
 // The cards are rendered from the topics array in data.js
 function renderTopics() {
@@ -433,6 +521,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderSiteInfo();
   renderFeaturedVideo();
   renderCollections();
+  renderEpisode();
   renderTopics();
   renderArticles();
   renderVideos();

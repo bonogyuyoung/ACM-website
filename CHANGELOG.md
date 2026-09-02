@@ -2,6 +2,7 @@
 
 자동 실행이 매회 기록한다. 형식: `날짜 · 작업ID · 요약 · 변경 파일`
 
+- 2026-09-02 · A7 · 항목 상세 페이지. `episode.html?id=`과 `script.js`의 `renderEpisode()`/`findItemById()` 추가 — 핵심 개념 목록, 큰 질문, 상태 배지, 연결된 아티클/영상/논문 자리(없으면 Coming Soon)를 렌더. 코어 개념·큰 질문이 비어 있으면 "Coming soon."으로 표시하며 레이아웃 유지. id가 없거나 못 찾으면 `seasons.html`로 안내하는 화면을 보여줌(자동 리다이렉트 아님). 정상/빈 필드/잘못된 id 세 케이스 모두 시뮬레이션으로 검증 · episode.html, script.js
 - 2026-09-02 · A6 · 묶음 목록 페이지. `seasons.html` 추가 + `script.js`에 `renderCollections()` 추가(제목·부제·항목 수·진행률, 진행률은 `config.statusStages`의 마지막 단계 기준으로 계산해 특정 상태명을 하드코딩하지 않음). 0개면 A4의 빈 상태 재사용. 헤더 Explore 메뉴에 `config.labels.collectionPlural`로 링크 추가(모든 페이지에 자동 반영). 0개·N개 케이스 모두 시뮬레이션으로 검증 · seasons.html, script.js
 - 2026-09-02 · A5 · 디자인 토큰 + 컴포넌트 규약. `styles.css` 전체를 훑어 색·타이포·간격·모서리 반경·그림자 리터럴을 `:root` 스케일(`--text-*`, `--space-*`, `--radius-*`, `--shadow-*`)로 교체. README에 토큰 스케일과 카드/배지/버튼/빈상태 클래스 규약 표 추가 · styles.css, README.md
 - 2026-09-02 · A4 · 빈 상태 시스템. `renderEmptyState()` 공통 함수를 추가하고 topics/articles/videos/team-roles/roadmap/home-buttons 렌더 함수 전부가 0개일 때 이걸 쓰도록 통일. `styles.css`에 `.empty-state` 스타일 추가(grid 안에서는 전체 폭 차지). 콘텐츠 0개인 topics/articles/videos 페이지가 깨진 화면이 아니라 안내 문구가 있는 완성된 화면으로 보이는 것을 시뮬레이션으로 확인 · script.js, styles.css
