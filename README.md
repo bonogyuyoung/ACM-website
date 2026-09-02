@@ -42,3 +42,26 @@
 ## 공통 UI 규약
 
 헤더/푸터 같은 공통 UI는 페이지마다 복붙하지 않는다. 각 HTML 파일은 `<div id="header-container">`와 `<div id="footer-container">`만 두고, `script.js`의 `renderHeader()` / `renderFooter()`가 내용을 채운다. 새로운 공통 UI가 필요하면 같은 방식(빈 컨테이너 + 렌더 함수)을 따른다.
+
+## 디자인 토큰
+
+색·타이포·간격·모서리 반경·그림자는 전부 `styles.css`의 `:root`에 CSS 커스텀 프로퍼티로 정의되어 있다. 새 스타일을 추가할 때는 리터럴 값(`#3498db`, `1.5rem` 등) 대신 아래 스케일을 참조한다.
+
+- **색:** `--primary-color` `--secondary-color` `--accent-color`(+ `--accent-hover`) `--background-color` `--card-bg` `--text-color` `--text-light` `--border-color` `--color-on-dark`(+ `--color-on-dark-muted`, 어두운 배경 위 텍스트용) — 상태 배지 색은 `--badge-*`로 별도 관리(아래 배지 참고)
+- **타이포:** `--text-xs`(0.8rem) `--text-sm`(0.85rem) `--text-base`(1rem) `--text-md`(1.1rem) `--text-lg`(1.25rem) `--text-xl`(1.5rem) `--text-2xl`(2rem) `--text-3xl`(2.5rem)
+- **간격:** `--space-1`(0.25rem) 부터 `--space-8`(3rem)까지 0.25rem 단위 스케일. padding/margin/gap은 이 중 하나를 쓴다.
+- **모서리 반경:** `--radius-sm`(4px, 버튼·배지) `--radius-md`(8px, 카드·패널)
+- **그림자:** `--shadow-sm`(헤더) `--shadow-md`(카드) `--shadow-lg`(드롭다운 패널) `--shadow-hover`(카드 호버)
+
+## 컴포넌트 클래스 규약
+
+새 목록형 페이지나 카드를 추가할 때는 아래 기존 클래스를 재사용한다. 새 클래스를 만들기 전에 이 표에 맞는 게 있는지 먼저 확인한다.
+
+| 클래스 | 용도 | 렌더 위치 |
+|---|---|---|
+| `.grid-container` + `.card` | 카드형 목록의 그리드와 개별 카드. 자동으로 줄바꿈되는 반응형 그리드(`repeat(auto-fill, minmax(300px, 1fr))`) | `script.js`의 `renderTopics()` / `renderArticles()` / `renderVideos()` / `renderTeamRoles()` / `renderRoadmap()` |
+| `.badge` + `.badge.<status>` | 상태 배지. `<status>`는 `config.statusStages`를 소문자·하이픈으로 변환한 값(`planned`/`researching`/`drafting`/`review`/`published`). 목록에 없는 상태는 자동으로 `.badge.default`로 떨어진다(배경색 없는 배지 방지) | `script.js`의 `getBadgeClass(status)` |
+| `.btn.btn-active` / `.btn.btn-disabled` | 링크가 있으면 활성 버튼, `"#"`거나 없으면 "Coming Soon" 형태의 비활성 버튼 | 카드 렌더 함수 내부의 `buttonHtml` 분기 |
+| `.empty-state` | 목록이 0개일 때의 안내 블록. `.grid-container` 안에서는 `grid-column: 1 / -1`로 전체 폭을 차지한다 | `script.js`의 `renderEmptyState(container, message)` — 모든 목록 렌더 함수가 0개일 때 이 함수를 호출한다 |
+
+새 목록 렌더 함수를 추가할 때는 `renderEmptyState()`를 먼저 호출하는 0개 분기를 넣는 걸 기본으로 한다.
