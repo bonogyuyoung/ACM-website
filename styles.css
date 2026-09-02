@@ -543,20 +543,42 @@ main {
   justify-content: center;
 }
 
-.featured-video-thumbnail {
-  max-width: 100%;
-  height: auto;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  object-fit: cover;
-}
-
-.featured-video-actions {
-  margin-top: var(--space-5);
-}
-
 @media (max-width: 768px) {
   .featured-video-content {
     flex-direction: column;
   }
+}
+
+/* Video Embed — 16:9 responsive YouTube embed (script.js renderVideoEmbed()).
+   Used on episode.html's Video slot, videos.html cards, and the home page
+   featured video. Falls back to a centered "Coming Soon" badge when no
+   youtubeId is set yet. */
+.video-embed {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: #000;
+  margin-bottom: var(--space-4);
+}
+
+.video-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.video-embed-empty {
+  background-color: #ecf0f1;
+}
+
+.video-embed-empty .btn-disabled {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin-top: 0;
 }

@@ -68,7 +68,7 @@
 선행: A7 · 파일: `article.html`, `data.js`
 완료: `article-template.html`의 7섹션(요약·왜 중요한가·핵심 용어·본문·단계별 설명·면책·출처)을 데이터 필드로 승격. 빈 필드는 "작성 중"으로 표시되고 레이아웃 유지. 면책 문구는 기존 것 그대로. **본문은 비워 둔다.**
 
-### [ ] A9 — 영상 임베드
+### [x] A9 — 영상 임베드
 선행: A7 · 파일: `script.js`, `styles.css`
 완료: `youtubeId` + 16:9 반응형 임베드. 없으면 Coming Soon. `featuredVideo` 하드코딩 제거하고 "가장 최근 published" 자동 선택 — 없으면 섹션 자체를 숨김.
 

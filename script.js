@@ -324,9 +324,37 @@ function renderEpisode() {
 
       <section class="grid-container">
         ${renderSlot("Article", item.article)}
-        ${renderSlot("Video", item.video)}
+        <div class="card">
+          <h4>Video</h4>
+          ${renderVideoEmbed(item.video)}
+        </div>
         ${renderSlot("Paper", item.paper)}
       </section>
+    </div>
+  `;
+}
+
+// Render a 16:9 responsive embed for a video slot, keyed on `youtubeId`.
+// Falls back to a "Coming Soon" placeholder (not a broken player) when no
+// id is set yet, since embeds are added by staff later, not authored here.
+function renderVideoEmbed(video) {
+  const youtubeId = video && video.youtubeId;
+  if (!youtubeId) {
+    return `
+      <div class="video-embed video-embed-empty">
+        <span class="btn btn-disabled">Coming Soon</span>
+      </div>
+    `;
+  }
+  return `
+    <div class="video-embed">
+      <iframe
+        src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(youtubeId)}"
+        title="${escapeHTML(video.title || 'Video')}"
+        loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      ></iframe>
     </div>
   `;
 }
@@ -486,26 +514,18 @@ function renderVideos() {
     return;
   }
 
-  // Render videos and determine button state based on link
-  container.innerHTML = videos.map(video => {
-    const isReady = video.link && video.link !== "#";
-    const buttonHtml = isReady 
-      ? `<a href="${video.link}" class="btn btn-active">Watch Video</a>`
-      : `<span class="btn btn-disabled">Coming Soon</span>`;
-
-    return `
-      <div class="card">
-        <span class="${getBadgeClass(video.status)}">${video.status}</span>
-        <h3>${video.title}</h3>
-        <div class="card-meta">
-          <strong>Related Content:</strong> ${video.relatedContent}<br>
-          <strong>Length:</strong> ${video.plannedLength}
-        </div>
-        <p>${video.description}</p>
-        ${buttonHtml}
+  container.innerHTML = videos.map(video => `
+    <div class="card">
+      <span class="${getBadgeClass(video.status)}">${video.status}</span>
+      <h3>${video.title}</h3>
+      <div class="card-meta">
+        <strong>Related Content:</strong> ${video.relatedContent}<br>
+        <strong>Length:</strong> ${video.plannedLength}
       </div>
-    `;
-  }).join('');
+      ${renderVideoEmbed(video)}
+      <p>${video.description}</p>
+    </div>
+  `).join('');
 }
 
 // Render team roles on the About page
@@ -569,32 +589,27 @@ function renderHomeButtons() {
   `).join('');
 }
 
-// Render featured video section on the home page
+// Render featured video section on the home page. featuredVideo (data.js) is
+// computed automatically from the most recently updated published item, so
+// this hides the whole section rather than showing an empty one whenever no
+// item qualifies yet.
 function renderFeaturedVideo() {
   const container = document.getElementById("featured-video-container");
   if (!container) return;
   if (typeof featuredVideo === 'undefined' || !featuredVideo) return;
 
-  const isReady = featuredVideo.link && featuredVideo.link !== "#";
-  const buttonHtml = isReady 
-    ? `<a href="${featuredVideo.link}" class="btn btn-active">Watch Video</a>`
-    : `<span class="btn btn-disabled">Coming Soon</span>`;
-
   container.innerHTML = `
     <div class="featured-video-section">
-      <h3>${featuredVideo.label}</h3>
+      <h3>${escapeHTML(featuredVideo.label)}</h3>
       <div class="featured-video-content">
         <div class="featured-video-text">
-          <h4>${featuredVideo.title}</h4>
-          <span class="${getBadgeClass(featuredVideo.status)}">${featuredVideo.status}</span>
-          <p>${featuredVideo.description}</p>
-          <p><strong>Related Article:</strong> ${featuredVideo.relatedArticle}</p>
-          <div class="featured-video-actions">
-            ${buttonHtml}
-          </div>
+          <h4>${escapeHTML(featuredVideo.title)}</h4>
+          <span class="${getBadgeClass(featuredVideo.status)}">${escapeHTML(featuredVideo.status || '')}</span>
+          <p>${escapeHTML(featuredVideo.description || '')}</p>
+          <p><strong>Related Content:</strong> ${escapeHTML(featuredVideo.relatedArticle || '')}</p>
         </div>
         <div class="featured-video-media">
-          <img src="${featuredVideo.thumbnail}" alt="Video Thumbnail" class="featured-video-thumbnail">
+          ${renderVideoEmbed(featuredVideo)}
         </div>
       </div>
     </div>
