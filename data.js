@@ -80,7 +80,9 @@ const videos = allItems
     status: item.video.status || item.status,
     plannedLength: item.video.plannedLength,
     description: item.video.description,
-    link: item.video.link || "#"
+    // YouTube video id for the 16:9 embed (script.js renderVideoEmbed()).
+    // No id yet -> the embed falls back to a "Coming Soon" placeholder.
+    youtubeId: item.video.youtubeId
   }));
 
 const teamRoles = [
@@ -167,6 +169,41 @@ const homeButtons = [
   }
 ];
 
-// No featured video yet — there is no published content to feature.
-// renderFeaturedVideo() in script.js already no-ops when this is falsy.
-const featuredVideo = null;
+// Featured video: automatically the video slot of the most recently updated
+// published item (never a manually chosen one, so it never needs editing
+// here as content changes). "Published" means the last stage in
+// config.statusStages, read live rather than assumed. "Most recent" compares
+// item.video.lastUpdated, an optional field set per video slot. No qualifying
+// item -> featuredVideo is null and renderFeaturedVideo() in script.js hides
+// the section entirely instead of showing an empty one.
+const finalStatusStage = config.statusStages.length
+  ? config.statusStages[config.statusStages.length - 1].toLowerCase()
+  : null;
+
+const publishedVideoItems = finalStatusStage
+  ? allItems.filter(item => {
+      if (!item.video) return false;
+      const status = (item.video.status || item.status || '').toLowerCase();
+      return status === finalStatusStage;
+    })
+  : [];
+
+const mostRecentVideoItem = publishedVideoItems.reduce((latest, current) => {
+  if (!latest) return current;
+  const latestDate = latest.video.lastUpdated ? new Date(latest.video.lastUpdated) : null;
+  const currentDate = current.video.lastUpdated ? new Date(current.video.lastUpdated) : null;
+  if (!currentDate) return latest;
+  if (!latestDate) return current;
+  return currentDate > latestDate ? current : latest;
+}, null);
+
+const featuredVideo = mostRecentVideoItem
+  ? {
+      label: "Featured Video",
+      title: mostRecentVideoItem.video.title || mostRecentVideoItem.title,
+      status: mostRecentVideoItem.video.status || mostRecentVideoItem.status,
+      description: mostRecentVideoItem.video.description,
+      relatedArticle: mostRecentVideoItem.title,
+      youtubeId: mostRecentVideoItem.video.youtubeId
+    }
+  : null;
