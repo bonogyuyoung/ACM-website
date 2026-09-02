@@ -7,12 +7,6 @@
 
 ---
 
-## [ ] X1 — GitHub 저장소 + 토큰  ★ 지금 필요
-**왜:** 이게 없으면 자동 실행이 시작되지 않는다.
-**할 일:** ① 저장소 생성(public) ② `Base Website` 폴더의 **파일들**을 루트에 업로드(폴더째 X) ③ Settings→Pages에서 `main` / `root` ④ fine-grained PAT — 그 저장소 하나만, Contents = Read and write ⑤ 저장소 주소와 토큰 전달
-**열리는 것:** 전부. A1부터 시작된다.
-**예상:** 30분
-
 ## [ ] X2 — Supabase 프로젝트 생성  ★ 곧 필요
 **왜:** 2단계(관리 콘솔)의 시작점. 이번 계획에서 콘솔을 초반으로 당겼기 때문에 X1 다음으로 급하다. **이게 풀려야 "코드 안 건드리고 콘텐츠 바꾸기"가 실현된다.**
 **할 일:** supabase.com에서 프로젝트 1개 생성 → Settings → API Keys 에서 **Project URL**과 **publishable key**(`sb_publishable_...`) 전달. 무료 티어로 충분.
@@ -61,3 +55,6 @@
 
 ## 해결됨
 (풀린 항목을 날짜와 함께 여기로 옮긴다)
+
+### [x] X1 — GitHub 저장소 + 토큰 (2026-09-02)
+저장소 `bonogyuyoung/ACM-website` 생성·public·Pages 활성화(`main`/`root`) 확인. `gh api repos/{owner}/{repo}/pages` 결과 `status: built`, 7개 페이지 전부 `https://bonogyuyoung.github.io/ACM-website/` 에서 200 응답. 이 자동 실행 자체가 토큰으로 동작하고 있으므로 PAT 전달도 완료된 상태로 판단.
