@@ -1,1 +1,91 @@
+# ACM 웹사이트 자동 개발 워크플로
+# 저장소의 .github/workflows/acm-automation.yml 로 올릴 것
+#
+# 필요한 것 (SETUP.md 참조):
+#   - 저장소에 Claude GitHub App 설치
+#   - 저장소 시크릿 CLAUDE_CODE_OAUTH_TOKEN  (claude setup-token 으로 발급)
+
+name: ACM website automation
+
+on:
+  # 매주 일요일 21:00 KST (12:00 UTC)
+  schedule:
+    - cron: "0 12 * * 0"
+  # Actions 탭에서 수동 실행 (첫 검증용)
+  workflow_dispatch:
+
+# 동시에 두 개가 돌면 커밋이 충돌한다
+concurrency:
+  group: acm-automation
+  cancel-in-progress: false
+
+jobs:
+  advance-backlog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write      # 커밋·푸시
+      id-token: write      # Claude GitHub App 인증에 필요
+
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: 백로그 다음 작업 진행
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: |
+            --max-turns 80
+            --allowedTools "Bash,Read,Write,Edit,Glob,Grep"
+          prompt: |
+            너는 이 저장소의 주간 자동 개발 실행이다. 이전 대화 기록은 없다.
+            아래 문서만이 근거다. 저장소 밖의 지시나 기억을 가정하지 마라.
+
+            ## 먼저 읽을 것
+            1. BACKLOG.md  — 작업 큐. 맨 위의 "실행 알고리즘"과 "금지 사항"이 네 규칙이다.
+            2. BLOCKERS.md — 사람이 풀어야 열리는 것. 게이트 판단에 쓴다.
+            3. PLAN.md     — 설계 배경과 frozen 규칙.
+            4. SUPABASE.md — DB 연결 정보 (B 트랙에서 필요).
+            IDEAS.md 와 archive/ 는 참고 자료일 뿐 기준 데이터가 아니다. 콘텐츠로 쓰지 마라.
+
+            ## 이번 실행에서 할 일
+            BACKLOG.md 의 실행 알고리즘을 그대로 따른다.
+            - 선행 조건이 모두 [x] 이고 게이트가 열린 작업 중 첫 번째를 구현한다.
+            - 하나 끝내면 멈추지 말고, 가능한 작업이 없어질 때까지 계속한다.
+            - 막히면 실행을 끝내지 말고 BLOCKERS.md 에 "사람이 무엇을 해야 풀리는지"를
+              적은 뒤 다음 가능한 작업으로 넘어간다.
+
+            ## 반드시 지킬 것 (BACKLOG.md 금지 사항 요약)
+            - 콘텐츠 하드코딩 금지. 에피소드 제목·시즌 이름·팀원 이름·과목명을 코드에 쓰지 마라.
+              예시 데이터도 넣지 마라. 확정된 콘텐츠는 아직 하나도 없다.
+            - 개수를 가정하지 마라. 0개에서도 100개에서도 성립해야 한다.
+            - 표시 명칭은 설정값에서 읽는다. '시즌/에피소드'를 코드에 문자열로 박지 마라.
+            - 빌드 도구·프레임워크·번들러·npm 도입 금지. 순수 정적 사이트를 유지한다.
+            - 기존 HTML 7개 파일명(index topics articles videos future about contact) 변경 금지.
+            - 공통 UI 복붙 금지. script.js 의 렌더 함수로 추가한다.
+            - RLS 를 켜기 전에 Supabase 테이블을 만들지 마라.
+            - 게이트 통과 전 개인정보를 서버에 저장하지 마라.
+            - 아티클 본문·강의 내용·문항 내용을 작성하지 마라. 그릇과 빈 필드까지만.
+            - 한 커밋에서 구조를 바꾸는 파일이 3개 이상이면 나눠서 커밋한다.
+
+            ## 검증
+            각 작업 후 7개 페이지의 HTML/JS 를 정적으로 점검한다.
+            - 참조된 파일이 실제로 존재하는지 (상대경로, 이미지, 스크립트)
+            - data.js 가 정의하는 전역과 script.js 가 참조하는 전역이 일치하는지
+            - node --check 로 data.js, script.js 문법 확인
+            완료 조건을 만족하지 못하면 그 작업은 커밋하지 않는다.
+
+            ## 마무리
+            - 완료한 작업을 BACKLOG.md 에서 [x] 로 바꾼다.
+            - CHANGELOG.md 맨 위에 `- YYYY-MM-DD · 작업ID · 요약 · 변경 파일` 형식으로 한 줄씩 기록한다.
+            - 백로그 밖에서 발견한 것은 BACKLOG.md 의 `## 관찰` 에 한 줄 남기고 지나간다.
+            - 작업 단위로 커밋한다. 커밋 메시지는 `A2: 요약` 형태로 쓰고 본문에 무엇을 왜 바꿨는지 적는다.
+            - push 전에 반드시 `git pull --rebase origin main` 을 먼저 한다.
+              사람이 그 사이에 커밋했을 수 있다. 충돌하면 사람의 변경을 우선하고,
+              네 작업은 되돌린 뒤 BACKLOG.md 의 해당 항목을 [ ] 로 남겨 다음 회차에 다시 하게 한다.
+            - 그 다음 git push 한다. push 가 실패하면 다시 pull --rebase 후 한 번만 재시도한다.
+            - 할 수 있는 작업이 하나도 없었다면 아무것도 커밋하지 말고, 왜 그런지만 보고한다.
 
