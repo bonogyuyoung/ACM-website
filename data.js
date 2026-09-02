@@ -66,7 +66,10 @@ const articles = allItems
     status: item.article.status || item.status,
     lastUpdated: item.article.lastUpdated,
     summary: item.article.summary,
-    link: item.article.link || "#"
+    // article.html?id= renders the full 7-section article for any item
+    // that has an article slot, so the link never depends on a manually
+    // entered URL.
+    link: `article.html?id=${encodeURIComponent(item.id)}`
   }));
 
 const videos = allItems
