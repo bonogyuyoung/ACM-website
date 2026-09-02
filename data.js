@@ -1,80 +1,84 @@
-const siteInfo = {
+/*
+  data.js
+  Single source of truth for site configuration and content.
+
+  config      — settings the console (B track) will eventually let staff edit:
+                site identity, display labels, publish cadence, status pipeline,
+                subject categories.
+  collections — the only content structure. Two tiers: a collection (default
+                display label "Season") holds items (default display label
+                "Episode"). Each item optionally carries an `article`, `video`,
+                and/or `paper` slot. Starts empty — no content is confirmed yet.
+
+  topics / articles / videos below are derived (not authored) from
+  `collections` so the existing page renderers in script.js keep working
+  unmodified whether there are 0 items or many.
+*/
+
+const config = {
   projectName: "[Project Name Here]",
   tagline: "Student-led medical STEM education project",
   mission:
     "We create research-based articles and explanatory videos that make medical and scientific topics easier for students to understand.",
   currentStage:
-    "June proof-of-work prototype. Full archive and platform features will be developed later."
+    "June proof-of-work prototype. Full archive and platform features will be developed later.",
+
+  labels: {
+    collection: "Season",
+    collectionPlural: "Seasons",
+    item: "Episode",
+    itemPlural: "Episodes"
+  },
+
+  // Order defines the pipeline. getBadgeClass() falls back to a default
+  // badge style for any status not in this list.
+  statusStages: ["Planned", "Researching", "Drafting", "Review", "Published"],
+
+  // Not yet decided — filled in from the console once content exists.
+  subjectCategories: [],
+
+  // Not yet decided — null until set in the console (no cadence assumed).
+  publishCadence: null
 };
 
-const topics = [
-  {
-    title: "Antibiotic Resistance",
-    category: "Immunology & Disease",
-    difficulty: "Intermediate",
-    status: "Drafting",
-    description:
-      "Explains how bacteria develop resistance through mutation, natural selection, and public health factors."
-  },
-  {
-    title: "Vaccines and Immune Memory",
-    category: "Immunology & Disease",
-    difficulty: "Beginner-Intermediate",
-    status: "Researching",
-    description:
-      "Explains how vaccines help the immune system recognize pathogens."
-  },
-  {
-    title: "CRISPR and Sickle Cell Disease",
-    category: "Genetics & Biotechnology",
-    difficulty: "Advanced",
-    status: "Planned",
-    description:
-      "Explains how gene editing can connect to inherited blood disorders."
-  }
-];
+// Backward-compatible alias: script.js reads `siteInfo` directly.
+const siteInfo = config;
 
-const articles = [
-  {
-    title: "How Evolution Creates Antibiotic Resistance",
-    relatedTopic: "Antibiotic Resistance",
-    status: "Drafting",
-    lastUpdated: "June 2026",
-    summary:
-      "A student-friendly explanation of how bacterial mutations and natural selection can lead to antibiotic resistance.",
-    link: "article-template.html"
-  },
-  {
-    title: "How Vaccines Train Immune Memory",
-    relatedTopic: "Vaccines and Immune Memory",
-    status: "Researching",
-    lastUpdated: "TBD",
-    summary:
-      "This article will explain how vaccines prepare the immune system to respond faster to future infections.",
-    link: "#"
-  }
-];
+// No seasons/episodes exist yet. Content is added from the console (B track),
+// never hardcoded here.
+const collections = [];
 
-const videos = [
-  {
-    title: "Antibiotic Resistance Explained in 90 Seconds",
-    relatedContent: "How Evolution Creates Antibiotic Resistance",
-    status: "Script Writing",
-    plannedLength: "1–2 minutes",
-    description:
-      "A short explainer video showing how bacteria can become resistant to antibiotics.",
-    link: "#"
-  },
-  {
-    title: "Vaccines and Immune Memory",
-    relatedContent: "How Vaccines Train Immune Memory",
-    status: "Planned",
-    plannedLength: "3–5 minutes",
-    description:
-      "A planned video explaining how immune memory works.",
-    link: "#"
-  }
-];
+const allItems = collections.flatMap(collection => collection.items || []);
+
+const topics = allItems.map(item => ({
+  title: item.title,
+  category: item.subject,
+  difficulty: item.difficulty,
+  status: item.status,
+  description: item.description
+}));
+
+const articles = allItems
+  .filter(item => item.article)
+  .map(item => ({
+    title: item.article.title || item.title,
+    relatedTopic: item.title,
+    status: item.article.status || item.status,
+    lastUpdated: item.article.lastUpdated,
+    summary: item.article.summary,
+    link: item.article.link || "#"
+  }));
+
+const videos = allItems
+  .filter(item => item.video)
+  .map(item => ({
+    title: item.video.title || item.title,
+    relatedContent: item.title,
+    status: item.video.status || item.status,
+    plannedLength: item.video.plannedLength,
+    description: item.video.description,
+    link: item.video.link || "#"
+  }));
 
 const teamRoles = [
   {
@@ -160,13 +164,6 @@ const homeButtons = [
   }
 ];
 
-const featuredVideo = {
-  label: "Latest Explainer",
-  title: "Antibiotic Resistance Explained in 90 Seconds",
-  description:
-    "Our newest student-made video explains how bacteria can become resistant to antibiotics through mutation and natural selection.",
-  status: "Script Writing",
-  thumbnail: "assets/placeholders/video-placeholder.png",
-  link: "#",
-  relatedArticle: "How Evolution Creates Antibiotic Resistance"
-};
+// No featured video yet — there is no published content to feature.
+// renderFeaturedVideo() in script.js already no-ops when this is falsy.
+const featuredVideo = null;

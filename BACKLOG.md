@@ -38,7 +38,7 @@
 선행: 없음 · 파일: `README.md`, `.nojekyll`
 완료: Pages 주소에서 7개 페이지가 전부 열리고 상대경로 링크가 살아 있음. README에 폴더 구조와 편집 안내.
 
-### [ ] A2 — 빈 계층 스키마 + 설정 분리
+### [x] A2 — 빈 계층 스키마 + 설정 분리
 선행: A1 · 파일: `data.js` (단독)
 완료: `config`(사이트명·표시 명칭·발행 주기·상태 단계 목록·과목 분류)와 `collections`(묶음 → 항목 2계층, **비어 있음**)로 재구성. 각 항목은 `article`/`video`/`paper` 슬롯을 선택적으로 가짐.
 **금지: 시즌·에피소드를 하나라도 시딩하지 말 것.** 기존 Antibiotic Resistance / Vaccines / CRISPR 3건도 제거.
