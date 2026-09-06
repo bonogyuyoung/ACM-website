@@ -633,22 +633,31 @@ function renderTeamRoles() {
   `).join('');
 }
 
-// Render roadmap on the Future page
-function renderRoadmap() {
+// Render the future platform's three structural parts on future.html.
+// Reads `futurePlatform` (data.js) — a fixed description of the platform's
+// architecture, not confirmed content — so a part with `gated: true` shows
+// its gate note instead of a timeline claim.
+function renderFuturePlatform() {
   const container = document.getElementById("roadmap-list");
   if (!container) return;
 
-  if (!roadmap || roadmap.length === 0) {
-    renderEmptyState(container, "Roadmap hasn't been added yet.");
+  if (!futurePlatform || futurePlatform.length === 0) {
+    renderEmptyState(container, "Future platform structure hasn't been defined yet.");
     return;
   }
 
-  container.innerHTML = roadmap.map(phase => `
-    <div class="card">
-      <h3>${phase.phase}</h3>
-      <p>${phase.description}</p>
-    </div>
-  `).join('');
+  container.innerHTML = futurePlatform.map((part, index) => {
+    const gateHtml = part.gated
+      ? `<p class="card-meta"><strong>Status:</strong> Gated — ${escapeHTML(part.gateNote || 'waiting on an approval step before this part can launch.')}</p>`
+      : '';
+    return `
+      <div class="card">
+        <h3>${index + 1}. ${escapeHTML(part.title)}</h3>
+        <p>${escapeHTML(part.description)}</p>
+        ${gateHtml}
+      </div>
+    `;
+  }).join('');
 }
 
 // Helper to escape HTML characters
@@ -719,6 +728,6 @@ document.addEventListener("DOMContentLoaded", () => {
   renderArticles();
   renderVideos();
   renderTeamRoles();
-  renderRoadmap();
+  renderFuturePlatform();
   renderHomeButtons();
 });

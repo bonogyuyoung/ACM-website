@@ -112,21 +112,32 @@ const teamRoles = [
   }
 ];
 
-const roadmap = [
+// The long-term platform (future.html) has three structural parts, per
+// PLAN.md's architecture — this describes what the platform is made of, not
+// confirmed content, so it isn't subject to the no-content-hardcoding rule.
+// Part 3 depends on a gate (guardian consent + staff approval before any
+// account or personal learning data exists) that hasn't opened yet, so its
+// entry carries `gated: true` instead of a timeline claim.
+const futurePlatform = [
   {
-    phase: "June Prototype",
+    title: "Science Communication",
     description:
-      "Build a simple proof-of-work website showing our mission, topic plans, and content structure."
+      "Research-based articles and explainer videos on medical and scientific topics, organized into collections of items.",
+    gated: false
   },
   {
-    phase: "Summer Archive",
+    title: "Academic Courses",
     description:
-      "Publish the first set of research-based articles and explainer videos."
+      "Structured courses with units, lessons, and practice questions, built and edited from the console.",
+    gated: false
   },
   {
-    phase: "Future Platform",
+    title: "Personalized Learning",
     description:
-      "Develop course pages, practice questions, and carefully reviewed personalized learning tools."
+      "Account-based progress tracking, strength/weakness analysis, and a reviewed AI tutor built on course content.",
+    gated: true,
+    gateNote:
+      "Waiting on guardian consent and staff approval before any account or personal learning data can be stored."
   }
 ];
 
