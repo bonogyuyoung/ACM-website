@@ -44,6 +44,7 @@ function renderHeader() {
             <a href="articles.html" class="${isActive('articles.html')}">Articles</a>
             <a href="videos.html" class="${isActive('videos.html')}">Videos</a>
             <a href="archive.html" class="${isActive('archive.html')}">Archive</a>
+            <a href="bookmarks.html" class="${isActive('bookmarks.html')}">Saved</a>
             <a href="future.html" class="${isActive('future.html')}">Future Platform</a>
             <a href="about.html" class="${isActive('about.html')}">Who We Are</a>
             <a href="contact.html" class="${isActive('contact.html')}">Contact</a>
@@ -397,6 +398,7 @@ function renderEpisode() {
         <div class="card-meta">
           <strong>${escapeHTML(config.labels.collection)}:</strong> ${escapeHTML(collection.title)}
         </div>
+        ${renderBookmarkButton('item', item.id, item.title)}
       </div>
 
       <section>
@@ -609,6 +611,7 @@ function renderArticleDetail() {
         <div class="card-meta">
           <strong>Last Updated:</strong> ${textOr(article.lastUpdated)}
         </div>
+        ${renderBookmarkButton('article', item.id, article.title || item.title)}
       </div>
 
       <section>
@@ -647,6 +650,167 @@ function renderArticleDetail() {
       </section>
     </article>
   `;
+}
+
+// --- E2: bookmarks (items, articles, lessons) saved to localStorage ---
+// One flat list, each entry tagged with a `type` so a single "Saved" page
+// (bookmarks.html) can group them. 'lesson' has no page yet (D track isn't
+// built), but the storage shape and resolveBookmarkLink() already handle it
+// so nothing here needs to change once lesson.html exists.
+const BOOKMARKS_KEY = 'acm:bookmarks';
+
+function getBookmarks() {
+  try {
+    const raw = localStorage.getItem(BOOKMARKS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveBookmarksList(bookmarks) {
+  try {
+    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks));
+  } catch (e) {
+    // Ignore — no persistent bookmarks this session (private mode, quota).
+  }
+}
+
+function isBookmarked(type, id) {
+  return getBookmarks().some(b => b.type === type && String(b.id) === String(id));
+}
+
+// Returns the new saved state (true if now bookmarked, false if removed).
+function toggleBookmark(type, id, title) {
+  const bookmarks = getBookmarks();
+  const index = bookmarks.findIndex(b => b.type === type && String(b.id) === String(id));
+  if (index >= 0) {
+    bookmarks.splice(index, 1);
+    saveBookmarksList(bookmarks);
+    return false;
+  }
+  bookmarks.push({ type, id: String(id), title: title || '', addedAt: new Date().toISOString() });
+  saveBookmarksList(bookmarks);
+  return true;
+}
+
+// Renders a Save/Saved toggle button. Used on episode.html (type: 'item')
+// and article.html (type: 'article'); lesson.html will use type: 'lesson'
+// once it exists.
+function renderBookmarkButton(type, id, title) {
+  const saved = isBookmarked(type, id);
+  return `
+    <button
+      type="button"
+      class="btn ${saved ? 'btn-active' : 'btn-disabled'} bookmark-btn"
+      data-bookmark-type="${escapeHTML(type)}"
+      data-bookmark-id="${escapeHTML(String(id))}"
+      data-bookmark-title="${escapeHTML(title || '')}"
+      aria-pressed="${saved}"
+    >${saved ? 'Saved ✓' : 'Save'}</button>
+  `;
+}
+
+// Resolves a stored bookmark entry to a link and whether its target still
+// exists in the current data — content can be edited/removed from the
+// console independently of what a visitor saved earlier.
+function resolveBookmarkLink(entry) {
+  if (entry.type === 'item') {
+    const match = findItemById(entry.id);
+    return { link: `episode.html?id=${encodeURIComponent(entry.id)}`, exists: !!match };
+  }
+  if (entry.type === 'article') {
+    const match = findItemById(entry.id);
+    return { link: `article.html?id=${encodeURIComponent(entry.id)}`, exists: !!(match && match.item.article) };
+  }
+  return { link: `lesson.html?id=${encodeURIComponent(entry.id)}`, exists: false };
+}
+
+// Render the saved list (bookmarks.html) grouped by type. Sections with no
+// entries are omitted entirely rather than shown empty.
+function renderBookmarks() {
+  const container = document.getElementById("bookmarks-container");
+  if (!container) return;
+
+  document.title = `Saved | ${siteInfo.projectName}`;
+
+  const bookmarks = getBookmarks();
+  if (!bookmarks.length) {
+    renderEmptyState(container, "Nothing saved yet. Use the Save button on an item or article to add it here.");
+    return;
+  }
+
+  const sections = [
+    { type: 'item', label: config.labels.itemPlural || 'Items' },
+    { type: 'article', label: 'Articles' },
+    { type: 'lesson', label: 'Lessons' }
+  ];
+
+  const sectionsHtml = sections.map(section => {
+    const entries = bookmarks.filter(b => b.type === section.type);
+    if (!entries.length) return '';
+
+    const entriesHtml = entries.map(entry => {
+      const { link, exists } = resolveBookmarkLink(entry);
+      const titleHtml = exists
+        ? `<a href="${escapeHTML(link)}">${escapeHTML(entry.title || 'Untitled')}</a>`
+        : `<span>${escapeHTML(entry.title || 'Untitled')}</span> <span class="card-meta">(no longer available)</span>`;
+      return `
+        <li>
+          ${titleHtml}
+          <button
+            type="button"
+            class="btn btn-disabled bookmark-remove-btn"
+            data-bookmark-remove-type="${escapeHTML(entry.type)}"
+            data-bookmark-remove-id="${escapeHTML(entry.id)}"
+          >Remove</button>
+        </li>
+      `;
+    }).join('');
+
+    return `
+      <div class="card">
+        <h3>${escapeHTML(section.label)}</h3>
+        <ul class="bookmark-list">${entriesHtml}</ul>
+      </div>
+    `;
+  }).join('');
+
+  if (!sectionsHtml.trim()) {
+    renderEmptyState(container, "Nothing saved yet. Use the Save button on an item or article to add it here.");
+    return;
+  }
+
+  container.innerHTML = sectionsHtml;
+}
+
+// Single delegated listener handles both the Save toggle (episode/article
+// detail pages) and Remove (bookmarks.html list) since both buttons are
+// created dynamically by innerHTML assignment rather than existing at load.
+function initBookmarkButtons() {
+  document.addEventListener('click', (e) => {
+    const toggleBtn = e.target.closest('[data-bookmark-type]');
+    if (toggleBtn) {
+      const type = toggleBtn.dataset.bookmarkType;
+      const id = toggleBtn.dataset.bookmarkId;
+      const title = toggleBtn.dataset.bookmarkTitle;
+      const nowSaved = toggleBookmark(type, id, title);
+      toggleBtn.setAttribute('aria-pressed', String(nowSaved));
+      toggleBtn.textContent = nowSaved ? 'Saved ✓' : 'Save';
+      toggleBtn.className = `btn ${nowSaved ? 'btn-active' : 'btn-disabled'} bookmark-btn`;
+      return;
+    }
+
+    const removeBtn = e.target.closest('[data-bookmark-remove-type]');
+    if (removeBtn) {
+      const type = removeBtn.dataset.bookmarkRemoveType;
+      const id = removeBtn.dataset.bookmarkRemoveId;
+      const remaining = getBookmarks().filter(b => !(b.type === type && String(b.id) === String(id)));
+      saveBookmarksList(remaining);
+      renderBookmarks();
+    }
+  });
 }
 
 // Render topic cards
@@ -839,6 +1003,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderArchive();
   renderEpisode();
   renderArticleDetail();
+  renderBookmarks();
   renderTopics();
   renderArticles();
   renderVideos();
@@ -846,4 +1011,5 @@ document.addEventListener("DOMContentLoaded", () => {
   renderFuturePlatform();
   renderHomeButtons();
   initVideoProgress();
+  initBookmarkButtons();
 });
