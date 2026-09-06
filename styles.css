@@ -582,3 +582,34 @@ main {
   transform: translate(-50%, -50%);
   margin-top: 0;
 }
+
+/* Bookmarks — Save/Saved toggle (episode.html, article.html) and the
+   saved list (bookmarks.html), rendered by renderBookmarkButton()/
+   renderBookmarks() in script.js. */
+.bookmark-btn {
+  margin-top: var(--space-4);
+}
+
+.bookmark-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bookmark-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.bookmark-list li:last-child {
+  border-bottom: none;
+}
+
+.bookmark-remove-btn {
+  margin-top: 0;
+  flex-shrink: 0;
+}
