@@ -424,6 +424,10 @@ function renderEpisode() {
 // Render a 16:9 responsive embed for a video slot, keyed on `youtubeId`.
 // Falls back to a "Coming Soon" placeholder (not a broken player) when no
 // id is set yet, since embeds are added by staff later, not authored here.
+// `enablejsapi=1` plus the unique iframe id let initVideoProgress() (E1)
+// attach a YouTube IFrame Player to resume/save watch position.
+let videoEmbedCounter = 0;
+
 function renderVideoEmbed(video) {
   const youtubeId = video && video.youtubeId;
   if (!youtubeId) {
@@ -433,10 +437,13 @@ function renderVideoEmbed(video) {
       </div>
     `;
   }
+  const domId = `yt-embed-${videoEmbedCounter++}`;
   return `
     <div class="video-embed">
       <iframe
-        src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(youtubeId)}"
+        id="${domId}"
+        data-youtube-id="${escapeHTML(youtubeId)}"
+        src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(youtubeId)}?enablejsapi=1"
         title="${escapeHTML(video.title || 'Video')}"
         loading="lazy"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -444,6 +451,114 @@ function renderVideoEmbed(video) {
       ></iframe>
     </div>
   `;
+}
+
+// --- E1: video watch position saved to localStorage, resumed on return ---
+// Keyed on youtubeId (not item id) so progress is tied to the actual video.
+// Never throws if localStorage is unavailable (private browsing, quota) —
+// resume just silently doesn't persist in that case.
+function videoProgressKey(youtubeId) {
+  return `acm:videoProgress:${youtubeId}`;
+}
+
+function getSavedVideoProgress(youtubeId) {
+  try {
+    const raw = localStorage.getItem(videoProgressKey(youtubeId));
+    const seconds = raw ? parseFloat(raw) : 0;
+    return Number.isFinite(seconds) && seconds > 0 ? seconds : 0;
+  } catch (e) {
+    return 0;
+  }
+}
+
+function saveVideoProgress(youtubeId, seconds) {
+  try {
+    localStorage.setItem(videoProgressKey(youtubeId), String(Math.floor(seconds)));
+  } catch (e) {
+    // Ignore — no persistent resume this session.
+  }
+}
+
+function clearVideoProgress(youtubeId) {
+  try {
+    localStorage.removeItem(videoProgressKey(youtubeId));
+  } catch (e) {
+    // Ignore.
+  }
+}
+
+const videoProgressIntervals = {};
+
+function onVideoPlayerReady(event, youtubeId) {
+  const saved = getSavedVideoProgress(youtubeId);
+  const duration = typeof event.target.getDuration === 'function' ? event.target.getDuration() : 0;
+  // Only jump ahead if there's meaningfully more video left to watch —
+  // avoids re-seeking to the very end of a video the viewer already finished.
+  if (saved > 5 && (!duration || saved < duration - 5)) {
+    event.target.seekTo(saved, true);
+  }
+}
+
+function onVideoPlayerStateChange(event, youtubeId) {
+  const player = event.target;
+  const State = window.YT && window.YT.PlayerState;
+  if (videoProgressIntervals[youtubeId]) {
+    clearInterval(videoProgressIntervals[youtubeId]);
+    delete videoProgressIntervals[youtubeId];
+  }
+  if (!State) return;
+
+  if (event.data === State.PLAYING) {
+    videoProgressIntervals[youtubeId] = setInterval(() => {
+      saveVideoProgress(youtubeId, player.getCurrentTime());
+    }, 5000);
+  } else if (event.data === State.PAUSED) {
+    saveVideoProgress(youtubeId, player.getCurrentTime());
+  } else if (event.data === State.ENDED) {
+    clearVideoProgress(youtubeId);
+  }
+}
+
+// Finds every video embed actually placed in the page (0 or many — episode
+// detail, video cards, featured video all use the same markup) and attaches
+// a YouTube IFrame Player once the API script has loaded. Loads the API
+// script at most once per page and chains onto any existing global callback
+// so this never clobbers other code that might also rely on it.
+function initVideoProgress() {
+  const iframes = document.querySelectorAll('.video-embed iframe[data-youtube-id]');
+  if (!iframes.length) return;
+
+  const attach = () => {
+    iframes.forEach(iframe => {
+      if (iframe.dataset.progressAttached) return;
+      iframe.dataset.progressAttached = "true";
+      const youtubeId = iframe.dataset.youtubeId;
+      new window.YT.Player(iframe.id, {
+        events: {
+          onReady: (e) => onVideoPlayerReady(e, youtubeId),
+          onStateChange: (e) => onVideoPlayerStateChange(e, youtubeId)
+        }
+      });
+    });
+  };
+
+  if (window.YT && window.YT.Player) {
+    attach();
+    return;
+  }
+
+  const previousCallback = window.onYouTubeIframeAPIReady;
+  window.onYouTubeIframeAPIReady = () => {
+    if (typeof previousCallback === 'function') previousCallback();
+    attach();
+  };
+
+  if (!document.getElementById('youtube-iframe-api')) {
+    const tag = document.createElement('script');
+    tag.id = 'youtube-iframe-api';
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+  }
 }
 
 // Render an item's article slot as the full 7-section article (article.html?id=...).
@@ -730,4 +845,5 @@ document.addEventListener("DOMContentLoaded", () => {
   renderTeamRoles();
   renderFuturePlatform();
   renderHomeButtons();
+  initVideoProgress();
 });
