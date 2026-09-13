@@ -45,6 +45,7 @@ function renderHeader() {
             <a href="videos.html" class="${isActive('videos.html')}">Videos</a>
             <a href="archive.html" class="${isActive('archive.html')}">Archive</a>
             <a href="bookmarks.html" class="${isActive('bookmarks.html')}">Saved</a>
+            <a href="dashboard.html" class="${isActive('dashboard.html')}">Dashboard</a>
             <a href="future.html" class="${isActive('future.html')}">Future Platform</a>
             <a href="about.html" class="${isActive('about.html')}">Who We Are</a>
             <a href="contact.html" class="${isActive('contact.html')}">Contact</a>
@@ -511,6 +512,7 @@ function onVideoPlayerStateChange(event, youtubeId) {
   if (!State) return;
 
   if (event.data === State.PLAYING) {
+    recordVideoWatched(youtubeId, false);
     videoProgressIntervals[youtubeId] = setInterval(() => {
       saveVideoProgress(youtubeId, player.getCurrentTime());
     }, 5000);
@@ -518,7 +520,43 @@ function onVideoPlayerStateChange(event, youtubeId) {
     saveVideoProgress(youtubeId, player.getCurrentTime());
   } else if (event.data === State.ENDED) {
     clearVideoProgress(youtubeId);
+    recordVideoWatched(youtubeId, true);
   }
+}
+
+// --- E3: watch history, kept separately from the resume position above ---
+// (which is deleted once a video ends). Keyed on youtubeId so it survives
+// content edits; renderDashboard() resolves the current title/item through
+// allItems at render time instead of storing a copy of it here.
+const WATCH_HISTORY_KEY = 'acm:watchHistory';
+
+function getWatchHistory() {
+  try {
+    const raw = localStorage.getItem(WATCH_HISTORY_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveWatchHistory(history) {
+  try {
+    localStorage.setItem(WATCH_HISTORY_KEY, JSON.stringify(history));
+  } catch (e) {
+    // Ignore — no persistent watch history this session.
+  }
+}
+
+// A video already marked completed stays completed even if re-watched.
+function recordVideoWatched(youtubeId, completed) {
+  const history = getWatchHistory();
+  const existing = history[youtubeId];
+  history[youtubeId] = {
+    completed: !!completed || !!(existing && existing.completed),
+    updatedAt: new Date().toISOString()
+  };
+  saveWatchHistory(history);
 }
 
 // Finds every video embed actually placed in the page (0 or many — episode
@@ -591,6 +629,7 @@ function renderArticleDetail() {
   const textOr = (value) => value ? escapeHTML(value) : placeholder;
 
   document.title = `${article.title || item.title} | ${siteInfo.projectName}`;
+  markArticleRead(item.id, article.title || item.title);
 
   const keyTermsHtml = article.keyTerms && article.keyTerms.length
     ? `<ul>${article.keyTerms.map(t => `<li><strong>${escapeHTML(t.term)}:</strong> ${escapeHTML(t.definition)}</li>`).join('')}</ul>`
@@ -650,6 +689,33 @@ function renderArticleDetail() {
       </section>
     </article>
   `;
+}
+
+// --- E3: articles read, recorded whenever article.html renders a real article ---
+const READ_ARTICLES_KEY = 'acm:readArticles';
+
+function getReadArticles() {
+  try {
+    const raw = localStorage.getItem(READ_ARTICLES_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveReadArticles(map) {
+  try {
+    localStorage.setItem(READ_ARTICLES_KEY, JSON.stringify(map));
+  } catch (e) {
+    // Ignore — no persistent read history this session.
+  }
+}
+
+function markArticleRead(id, title) {
+  const map = getReadArticles();
+  map[id] = { title: title || '', readAt: new Date().toISOString() };
+  saveReadArticles(map);
 }
 
 // --- E2: bookmarks (items, articles, lessons) saved to localStorage ---
@@ -811,6 +877,97 @@ function initBookmarkButtons() {
       renderBookmarks();
     }
   });
+}
+
+// --- E3: learning dashboard (dashboard.html) — everything computed from the
+// local records above, plus a read-only placeholder for solved questions.
+// The practice question engine (D5) doesn't exist yet, so nothing ever writes
+// to this key today; once D5 lands, writing `{title, ...}` entries here makes
+// them show up with no changes needed on this page (same forward-compat
+// approach E2 used for the 'lesson' bookmark type).
+const SOLVED_QUESTIONS_KEY = 'acm:solvedQuestions';
+
+function getSolvedQuestions() {
+  try {
+    const raw = localStorage.getItem(SOLVED_QUESTIONS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+// Renders one dashboard card, or nothing if there are no rows — sections
+// with no entries are omitted entirely, same convention as renderBookmarks().
+function renderDashboardSection(label, rows, rowTemplate) {
+  if (!rows.length) return '';
+  return `
+    <div class="card">
+      <h3>${escapeHTML(label)}</h3>
+      <ul class="bookmark-list">${rows.map(rowTemplate).join('')}</ul>
+    </div>
+  `;
+}
+
+function renderDashboard() {
+  const container = document.getElementById("dashboard-container");
+  if (!container) return;
+
+  document.title = `Learning Dashboard | ${siteInfo.projectName}`;
+
+  const videoRows = Object.entries(getWatchHistory()).map(([youtubeId, record]) => {
+    const item = allItems.find(candidate => candidate.video && candidate.video.youtubeId === youtubeId);
+    return {
+      title: item ? (item.video.title || item.title) : 'Untitled video',
+      link: item ? `episode.html?id=${encodeURIComponent(item.id)}` : null,
+      completed: !!record.completed,
+      updatedAt: record.updatedAt
+    };
+  }).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+  const articleRows = Object.entries(getReadArticles()).map(([id, record]) => {
+    const match = findItemById(id);
+    const exists = !!(match && match.item.article);
+    return {
+      title: exists ? (match.item.article.title || match.item.title) : (record.title || 'Untitled article'),
+      link: `article.html?id=${encodeURIComponent(id)}`,
+      exists,
+      readAt: record.readAt
+    };
+  }).sort((a, b) => new Date(b.readAt) - new Date(a.readAt));
+
+  const questionRows = getSolvedQuestions();
+
+  const sectionsHtml = [
+    renderDashboardSection('Videos Watched', videoRows, row => `
+      <li>
+        ${row.link
+          ? `<a href="${escapeHTML(row.link)}">${escapeHTML(row.title)}</a>`
+          : `<span>${escapeHTML(row.title)}</span> <span class="card-meta">(no longer available)</span>`}
+        <span class="card-meta">${row.completed ? 'Completed' : 'In progress'}</span>
+      </li>
+    `),
+    renderDashboardSection('Articles Read', articleRows, row => `
+      <li>
+        ${row.exists
+          ? `<a href="${escapeHTML(row.link)}">${escapeHTML(row.title)}</a>`
+          : `<span>${escapeHTML(row.title)}</span> <span class="card-meta">(no longer available)</span>`}
+      </li>
+    `),
+    renderDashboardSection('Practice Questions Solved', questionRows, row => `
+      <li>${escapeHTML((row && row.title) || 'Practice question')}</li>
+    `)
+  ].join('');
+
+  if (!sectionsHtml.trim()) {
+    renderEmptyState(
+      container,
+      "No learning activity recorded yet. Watch a video, read an article, or solve a practice question to see it here."
+    );
+    return;
+  }
+
+  container.innerHTML = sectionsHtml;
 }
 
 // Render topic cards
@@ -1004,6 +1161,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderEpisode();
   renderArticleDetail();
   renderBookmarks();
+  renderDashboard();
   renderTopics();
   renderArticles();
   renderVideos();
