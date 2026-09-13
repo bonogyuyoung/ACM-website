@@ -13,6 +13,17 @@
     <section>
       <h2>Learning Dashboard</h2>
       <p>Videos watched, articles read, and practice questions solved — kept only in this browser.</p>
+
+      <div class="card">
+        <h3>Backup &amp; Restore</h3>
+        <p>Export your saved items, watch history, and read articles as a JSON file, or import a file you exported on another device. No account needed.</p>
+        <button type="button" class="btn btn-active" id="export-data-btn">Export My Data</button>
+        <label class="btn btn-active" for="import-data-input">Import My Data
+          <input type="file" id="import-data-input" accept="application/json" hidden>
+        </label>
+        <p class="card-meta" id="data-transfer-status"></p>
+      </div>
+
       <div id="dashboard-container" class="grid-container"></div>
     </section>
   </main>

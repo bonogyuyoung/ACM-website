@@ -970,6 +970,101 @@ function renderDashboard() {
   container.innerHTML = sectionsHtml;
 }
 
+// --- E4: export/import every acm:* localStorage record as one JSON file ---
+// Reads keys by prefix instead of naming each one (bookmarks, watch history,
+// read articles, future settings/solved-questions keys, ...) so this never
+// needs an update when another track adds a new local record.
+function getAllLocalData() {
+  const data = {};
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.indexOf('acm:') === 0) {
+        data[key] = localStorage.getItem(key);
+      }
+    }
+  } catch (e) {
+    // Ignore — export will just be empty in unsupported environments.
+  }
+  return data;
+}
+
+// Only writes acm:-prefixed keys from the parsed file, so an unrelated or
+// hand-edited JSON blob can't be used to inject arbitrary localStorage keys.
+// Returns how many keys were written.
+function applyImportedData(data) {
+  if (!data || typeof data !== 'object') return 0;
+  let count = 0;
+  Object.keys(data).forEach(key => {
+    if (key.indexOf('acm:') !== 0 || typeof data[key] !== 'string') return;
+    try {
+      localStorage.setItem(key, data[key]);
+      count++;
+    } catch (e) {
+      // Ignore this key — quota or an unsupported environment.
+    }
+  });
+  return count;
+}
+
+function exportLocalData() {
+  const json = JSON.stringify(getAllLocalData(), null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `acm-learning-data-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function importLocalDataFromFile(file, onDone) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let parsed;
+    try {
+      parsed = JSON.parse(reader.result);
+    } catch (e) {
+      onDone(0, 'invalid-json');
+      return;
+    }
+    onDone(applyImportedData(parsed), null);
+  };
+  reader.onerror = () => onDone(0, 'read-error');
+  reader.readAsText(file);
+}
+
+function initDataTransferControls() {
+  const exportBtn = document.getElementById('export-data-btn');
+  const importInput = document.getElementById('import-data-input');
+  const statusEl = document.getElementById('data-transfer-status');
+
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      exportLocalData();
+      if (statusEl) statusEl.textContent = 'Export started — check your downloads.';
+    });
+  }
+
+  if (importInput) {
+    importInput.addEventListener('change', () => {
+      const file = importInput.files && importInput.files[0];
+      if (!file) return;
+      importLocalDataFromFile(file, (count, error) => {
+        if (statusEl) {
+          statusEl.textContent = error
+            ? 'Import failed — that file was not valid JSON.'
+            : `Imported ${count} record${count === 1 ? '' : 's'}. Refreshing this page's lists now.`;
+        }
+        importInput.value = '';
+        if (!error) renderDashboard();
+      });
+    });
+  }
+}
+
 // Render topic cards
 // The cards are rendered from the topics array in data.js
 function renderTopics() {
@@ -1162,6 +1257,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderArticleDetail();
   renderBookmarks();
   renderDashboard();
+  initDataTransferControls();
   renderTopics();
   renderArticles();
   renderVideos();
