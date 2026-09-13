@@ -26,12 +26,8 @@ function renderHeader() {
           <div class="header-actions">
             <button class="settings-button" id="settings-btn" aria-expanded="false" aria-controls="settings-panel">⚙ Settings</button>
             <div class="settings-panel" id="settings-panel">
-              <ul>
-                <li>Display preferences — Coming soon</li>
-                <li>Accessibility options — Coming soon</li>
-                <li>Account features — Future feature</li>
-              </ul>
-              <p>Settings are not active in this prototype.</p>
+              ${renderSettingsControls()}
+              <p class="settings-note">Saved in this browser only. Account sync is a future feature.</p>
             </div>
           </div>
         </div>
@@ -58,6 +54,7 @@ function renderHeader() {
   // Initialize interactive menus
   initSettingsMenu();
   initExploreMenu();
+  initSettingsControls();
 }
 
 function initSettingsMenu() {
@@ -140,6 +137,117 @@ function initExploreMenu() {
     if (!menu.classList.contains("open")) {
       btn.setAttribute("aria-expanded", "false");
     }
+  });
+}
+
+// --- E5: display settings (theme, accent color, text size), localStorage only ---
+// One key holds all three so a future add (e.g. reduced motion) only needs a
+// new entry in SETTINGS_GROUPS plus a matching CSS attribute selector.
+const SETTINGS_KEY = 'acm:settings';
+
+const SETTINGS_GROUPS = [
+  {
+    key: 'theme',
+    label: 'Theme',
+    options: [
+      { value: 'light', label: 'Light' },
+      { value: 'dark', label: 'Dark' }
+    ]
+  },
+  {
+    key: 'colorTheme',
+    label: 'Color',
+    options: [
+      { value: 'blue', label: 'Blue' },
+      { value: 'green', label: 'Green' },
+      { value: 'purple', label: 'Purple' }
+    ]
+  },
+  {
+    key: 'fontSize',
+    label: 'Text Size',
+    options: [
+      { value: 'small', label: 'A-' },
+      { value: 'medium', label: 'A' },
+      { value: 'large', label: 'A+' }
+    ]
+  }
+];
+
+const DEFAULT_SETTINGS = { theme: 'light', colorTheme: 'blue', fontSize: 'medium' };
+
+function getSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return Object.assign({}, DEFAULT_SETTINGS, parsed && typeof parsed === 'object' ? parsed : {});
+  } catch (e) {
+    return Object.assign({}, DEFAULT_SETTINGS);
+  }
+}
+
+function saveSettings(settings) {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch (e) {
+    // Ignore — settings just won't persist this session.
+  }
+}
+
+// Sets data-* attributes on <html>; styles.css keys its theme/color/text-size
+// overrides off these same attributes.
+function applySettings(settings) {
+  const root = document.documentElement;
+  if (!root) return;
+  root.setAttribute('data-theme', settings.theme === 'dark' ? 'dark' : 'light');
+  root.setAttribute('data-color-theme', settings.colorTheme || DEFAULT_SETTINGS.colorTheme);
+  root.setAttribute('data-font-size', settings.fontSize || DEFAULT_SETTINGS.fontSize);
+}
+
+function renderSettingsControls() {
+  return SETTINGS_GROUPS.map(group => `
+    <div class="settings-group">
+      <span class="settings-label">${escapeHTML(group.label)}</span>
+      <div class="settings-options" data-setting="${escapeHTML(group.key)}">
+        ${group.options.map(opt => `<button type="button" class="btn-toggle" data-value="${escapeHTML(opt.value)}" aria-pressed="false">${escapeHTML(opt.label)}</button>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function syncSettingsControls(settings) {
+  document.querySelectorAll('.settings-options').forEach(group => {
+    const key = group.dataset.setting;
+    group.querySelectorAll('[data-value]').forEach(btn => {
+      const isActive = btn.dataset.value === settings[key];
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-pressed', String(isActive));
+    });
+  });
+}
+
+function updateSetting(key, value) {
+  const settings = getSettings();
+  settings[key] = value;
+  saveSettings(settings);
+  applySettings(settings);
+  syncSettingsControls(settings);
+}
+
+// Wires the buttons renderSettingsControls() just created into the panel.
+// Called from renderHeader() each time the header (and therefore the panel)
+// is re-rendered, so it always binds to the current DOM nodes.
+function initSettingsControls() {
+  const panel = document.getElementById('settings-panel');
+  if (!panel) return;
+  syncSettingsControls(getSettings());
+  panel.querySelectorAll('.settings-options [data-value]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const group = btn.closest('.settings-options');
+      if (!group) return;
+      updateSetting(group.dataset.setting, btn.dataset.value);
+    });
   });
 }
 
@@ -1246,6 +1354,7 @@ function renderFeaturedVideo() {
 // Initialize all render functions
 // Functions will safely return if their respective containers are not on the page
 document.addEventListener("DOMContentLoaded", () => {
+  applySettings(getSettings());
   renderHeader();
   renderFooter();
   renderSiteInfo();
