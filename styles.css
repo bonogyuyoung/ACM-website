@@ -9,8 +9,18 @@
   /* Color */
   --primary-color: #2c3e50;
   --secondary-color: #34495e;
-  --accent-color: #3498db;
-  --accent-hover: #2980b9;
+  /* --accent-color/--accent-hover paint solid backgrounds (buttons, badges)
+     that always carry white text, so they're tuned to satisfy 4.5:1 against
+     white regardless of theme. --link-color paints text that sits directly
+     on the page background, so light/dark theme need different values (a
+     single hue can't be dark enough for white-on-it AND light enough to read
+     on a near-black page) — see the data-theme="dark" overrides below.
+     --nav-active-color is for text on the header, which stays dark in both
+     site themes, so it gets one fixed light value per color theme. */
+  --accent-color: #2978ad;
+  --accent-hover: #22628e;
+  --link-color: #2978ad;
+  --nav-active-color: #5eaee3;
   --background-color: #f8f9fa;
   --card-bg: #ffffff;
   --text-color: #333333;
@@ -20,12 +30,13 @@
   --color-on-dark-muted: #ecf0f1;
 
   /* Status Badge Colors — one per config.statusStages entry, plus a default
-     fallback for any status not in that list. */
-  --badge-planned: #95a5a6;
+     fallback for any status not in that list. Tuned for >=4.5:1 against the
+     white badge text (.badge sets color: white). */
+  --badge-planned: #6d7879;
   --badge-researching: #9b59b6;
-  --badge-drafting: #f39c12;
-  --badge-review: #e67e22;
-  --badge-published: #27ae60;
+  --badge-drafting: #a3690c;
+  --badge-review: #b1611a;
+  --badge-published: #1e864a;
 
   /* Typography scale */
   --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -78,11 +89,27 @@ body {
 
 a {
   text-decoration: none;
-  color: var(--accent-color);
+  color: var(--link-color);
 }
 
 a:hover {
   text-decoration: underline;
+}
+
+/* Visible focus ring for keyboard navigation (F2). --link-color already
+   meets 3:1 against page/card backgrounds in every theme; inside the header
+   (always a dark background, independent of light/dark theme) that fails,
+   so it's swapped for the lighter --nav-active-color there. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--link-color);
+  outline-offset: 2px;
+}
+
+header :focus-visible {
+  outline-color: var(--nav-active-color);
 }
 
 /* Header & Navigation */
@@ -239,16 +266,31 @@ html[data-theme="dark"] {
   --text-color: #e6e6e6;
   --text-light: #a8adb3;
   --border-color: #343a40;
+  /* Link text needs to lighten back up for the near-black page background —
+     the light-theme --link-color is tuned the opposite direction. */
+  --link-color: #3498db;
 }
 
 html[data-color-theme="green"] {
-  --accent-color: #27ae60;
-  --accent-hover: #1e8449;
+  --accent-color: #1d8348;
+  --accent-hover: #186b3b;
+  --link-color: #1d8348;
+  --nav-active-color: #48bb79;
 }
 
 html[data-color-theme="purple"] {
   --accent-color: #8e44ad;
   --accent-hover: #6c3483;
+  --link-color: #8e44ad;
+  --nav-active-color: #c198d2;
+}
+
+html[data-theme="dark"][data-color-theme="green"] {
+  --link-color: #27ae60;
+}
+
+html[data-theme="dark"][data-color-theme="purple"] {
+  --link-color: #ab74c2;
 }
 
 html[data-font-size="small"] {
@@ -309,8 +351,8 @@ html[data-font-size="large"] {
 }
 
 .explore-menu a.active {
-  border-bottom: 2px solid var(--accent-color);
-  color: var(--accent-color);
+  border-bottom: 2px solid var(--nav-active-color);
+  color: var(--nav-active-color);
 }
 
 /* Footer */
@@ -337,7 +379,7 @@ footer {
   font-style: italic;
   margin-top: var(--space-4);
   font-size: var(--text-sm);
-  color: #95a5a6;
+  color: #aab7b8;
 }
 
 /* Content Sections */
