@@ -169,7 +169,7 @@
 ### [x] F2 — 접근성 기준선
 선행: F1 · 완료: 본문 대비 4.5:1 이상, 드롭다운 키보드 조작, 모든 이미지 alt, landmark 태그, 보이는 focus ring.
 
-### [ ] F3 — SEO·공유
+### [x] F3 — SEO·공유
 선행: F1 · 완료: 페이지별 meta description, OG 태그, sitemap, favicon.
 
 ### [ ] F4 — 발행 캘린더
