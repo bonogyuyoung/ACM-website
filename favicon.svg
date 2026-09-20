@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Site icon">
+  <!-- Generic atom/orbit mark. No confirmed project name or logo exists yet
+       (see BLOCKERS.md "정식 명칭"), so this is a neutral science placeholder
+       rather than a wordmark — swap for a real logo once one is decided. -->
+  <style>
+    .mark { stroke: #2978ad; fill: none; }
+    .core { fill: #2978ad; }
+    @media (prefers-color-scheme: dark) {
+      .mark { stroke: #3498db; }
+      .core { fill: #3498db; }
+    }
+  </style>
+  <g class="mark" stroke-width="2">
+    <ellipse cx="16" cy="16" rx="14" ry="6"/>
+    <ellipse cx="16" cy="16" rx="14" ry="6" transform="rotate(60 16 16)"/>
+    <ellipse cx="16" cy="16" rx="14" ry="6" transform="rotate(120 16 16)"/>
+  </g>
+  <circle class="core" cx="16" cy="16" r="3"/>
+</svg>

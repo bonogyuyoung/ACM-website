@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://bonogyuyoung.github.io/ACM-website/sitemap.xml
