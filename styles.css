@@ -733,6 +733,26 @@ main {
   margin-top: var(--space-4);
 }
 
+.donate-btn {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-5);
+  font-family: inherit;
+  font-size: var(--text-base);
+  cursor: pointer;
+}
+
+.donate-btn:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+}
+
+.donate-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .bookmark-list {
   list-style: none;
   margin: 0;
