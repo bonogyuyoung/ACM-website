@@ -180,6 +180,21 @@ const homeButtons = [
   }
 ];
 
+// Premium/support page (G9) — pricing tiers aren't decided yet, so this
+// starts empty like collections did before any content existed. The page
+// shows the same empty-state treatment as every other 0-item list until
+// tiers are defined (console/B6, later).
+const premiumTiers = [];
+
+// Donation action is built up to the connection point and no further: real
+// payment needs an adult-named payment account (BLOCKERS.md X7). `connected`
+// flips to true (with real payment wiring) once that's resolved — until
+// then the button renders disabled with this note instead of a dead link.
+const donationInfo = {
+  connected: false,
+  note: "Donations aren't connected yet. This will activate once a payment account is set up."
+};
+
 // Featured video: automatically the video slot of the most recently updated
 // published item (never a manually chosen one, so it never needs editing
 // here as content changes). "Published" means the last stage in

@@ -43,6 +43,7 @@ function renderHeader() {
             <a href="bookmarks.html" class="${isActive('bookmarks.html')}">Saved</a>
             <a href="dashboard.html" class="${isActive('dashboard.html')}">Dashboard</a>
             <a href="future.html" class="${isActive('future.html')}">Future Platform</a>
+            <a href="support.html" class="${isActive('support.html')}">Support</a>
             <a href="about.html" class="${isActive('about.html')}">Who We Are</a>
             <a href="contact.html" class="${isActive('contact.html')}">Contact</a>
           </nav>
@@ -1299,6 +1300,45 @@ function renderFuturePlatform() {
   }).join('');
 }
 
+// Render premium pricing tiers (G9). No tiers are defined yet, so this uses
+// the same empty-state pattern as every other 0-item list rather than
+// guessing at plans or prices.
+function renderPremiumTiers() {
+  const container = document.getElementById("premium-tiers");
+  if (!container) return;
+
+  if (typeof premiumTiers === 'undefined' || !premiumTiers.length) {
+    renderEmptyState(container, "Pricing hasn't been announced yet.");
+    return;
+  }
+
+  container.innerHTML = premiumTiers.map(tier => `
+    <div class="card">
+      <h3>${escapeHTML(tier.name)}</h3>
+      <p class="card-meta">${escapeHTML(tier.price || '')}</p>
+      <p>${escapeHTML(tier.description || '')}</p>
+    </div>
+  `).join('');
+}
+
+// Render the donate action (G9). Built up to the connection point and no
+// further, per PLAN.md's "게이트 뒤" rule — the button stays disabled with
+// an explanatory note until a payment account exists (BLOCKERS.md X7).
+function renderDonationSection() {
+  const container = document.getElementById("donation-section");
+  if (!container) return;
+  if (typeof donationInfo === 'undefined' || !donationInfo) return;
+
+  const noteHtml = donationInfo.connected
+    ? ''
+    : `<p class="card-meta">${escapeHTML(donationInfo.note || '')}</p>`;
+
+  container.innerHTML = `
+    <button type="button" class="donate-btn"${donationInfo.connected ? '' : ' disabled'}>Donate</button>
+    ${noteHtml}
+  `;
+}
+
 // Helper to escape HTML characters
 function escapeHTML(str) {
   const div = document.createElement('div');
@@ -1372,6 +1412,8 @@ document.addEventListener("DOMContentLoaded", () => {
   renderVideos();
   renderTeamRoles();
   renderFuturePlatform();
+  renderPremiumTiers();
+  renderDonationSection();
   renderHomeButtons();
   initVideoProgress();
   initBookmarkButtons();
